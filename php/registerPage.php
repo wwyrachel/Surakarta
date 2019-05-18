@@ -74,7 +74,7 @@ if (isset($_POST["Register"])){
   <input type= "hidden" name="lng" value="">
   <br>
     <div id="map"></div>
-	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCAoQXUPPZAxR8PH1exvt_2Rmy7-VPlPyE&libraries=places">
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=*api key*&libraries=places">
     </script>
     <script>
       
