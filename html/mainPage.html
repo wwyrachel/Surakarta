@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" /> 
+
+
+<title>Surakarta</title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+
+
+
+
+<p></p>
+<div class="game">
+<div id="play">
+<canvas id="game" width="700px" height="800px">
+Sorry! Your browser does not support HTML5!!!
+</canvas>
+<br></br>
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
+
+
+
+<button class="button button3" button type="button" onclick="location.reload()">Quit Game</button>
+
+<button class="button button3" button type="button" onclick="window.location='computerPlay.html'">Play with computer player</button>
+</div>
+
+
+
+
+
+<div style="width: 900px; height: 50px;">
+</div>
+
+
+
+<script>
+var canvas= document.querySelector("canvas");
+
+canvas.width= 700;
+canvas.height= 600;
+
+var c= canvas.getContext("2d");
+
+var x;
+var y;
+
+var cir1X=250;
+var cir1Y=200;
+var cir2X=450;
+var cir2Y=200;
+var cir3X=250;
+var cir3Y=400;
+var cir4X=450;
+var cir4Y=400;
+var radius=80;
+var radiusSmall=15;
+var mouseX;
+var mouseY;
+var count=0;
+window.turn=1;
+window.test=1;
+window.select=0;
+window.start=1;
+var scoreGrey=0;
+var scoreBlack=0;
+var move;
+
+var chessRow=6;
+var chessColumn=6;
+
+var outerLoop=[3,4,9,10, 13, 14, 15, 16, 17, 18,
+19, 20, 21, 22, 23, 24, 27,28, 33, 34];
+
+var innerLoop=[2,5,7,8,9,10,11,12,14,17, 20,23,25,
+26,27,28,29,30,32,35];
+
+var existingChess=[];
+
+window.chessResponse;
+
+
+//use array to initialize the x,y position, condition, motion and colour of each chess
+var chessBottom= new Array(chessRow);
+for(i=1; i<=chessColumn; i++){
+	chessBottom[i]=[];
+	for(j=1; j<=2; j++){
+		chessBottom[i][j]={id:(((j-1)*6)+i), x:0, y:0, condition:1, motion:0, colour:"black"};
+		chessBottom[i][j].x=cir1X+(radius/2*(i-1));
+		chessBottom[i][j].y=cir1Y+(radius/2*(j-1));
+		//console.log("id: ", chessBottom[i][j].id);
+					
+		
+	}
+	for(j=3; j<=4; j++){
+		chessBottom[i][j]={id:(((j-1)*6)+i), x:0, y:0, condition:0, motion:0, colour:"null"};
+		chessBottom[i][j].x=cir1X+(radius/2*(i-1));
+		chessBottom[i][j].y=cir1Y+(radius/2*(j-1));
+		
+	}
+	for(j=5; j<=6; j++){
+		chessBottom[i][j]={id:(((j-1)*6)+i),x:0, y:0, condition:1, motion:0, colour:"grey"};
+		chessBottom[i][j].x=cir1X+(radius/2*(i-1));
+		chessBottom[i][j].y=cir1Y+(radius/2*(j-1));
+		
+					
+	}
+	
+}
+
+
+
+
+//add mouse event in javascript
+window.addEventListener("mousemove", function(e){
+	mouseX=e.x;
+	mouseY=e.y;
+	
+})
+
+//use event listener to make when user double click, the chess can move
+function doubleClick(){
+	document.getElementById("game").addEventListener("dblclick", function(e){selectChess(e.clientX-10, e.clientY-30)
+	},false);
+}
+
+function mousemoveChess(){
+	document.getElementById("game").addEventListener("mousemove", function(e){
+		
+		if (window.select==0){
+			e.stopImmediatePropagation();
+			
+		}
+		else{
+			moveChess(e.clientX-10, e.clientY-30);
+		}
+	},false);
+}
+
+function click(){
+	document.getElementById("game").addEventListener("click", function(e){
+		if (window.select==0){
+		
+			e.stopImmediatePropagation();
+			
+		}
+		else{
+			dropChess(e.clientX-10, e.clientY-30)
+		}
+	},false);
+}
+
+function getXML(){
+    var xhttp= new XMLHttpRequest();
+	xhttp.onreadystatechange= function(){
+	if (this.readyState ==4 & this.status ==200) {
+	   //document.getElementById("message").innerHTML=
+	   //this.responseText;
+	   //window.chessResponse=this.responseText;
+	   //console.log(window.chessResponse);
+	   
+	   }
+	};
+	xhttp.open("GET","response.txt", true);
+	xhttp.send();
+}
+
+function postXML(){
+	var xmlhttp;
+if (window.XMLHttpRequest)
+ {// code for IE7+, Firefox, Chrome, Opera, Safari
+ xmlhttp=new XMLHttpRequest();
+ }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.onreadystatechange=function()
+  {
+  if (xmlhttp.readyState==4 && xmlhttp.status==200)
+  {
+  //console.log('done');
+ }
+}
+
+xmlhttp.open("POST","pieces.php",true);
+xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+//xmlhttp.send("name=Jk");
+xmlhttp.send("name="+existingChess);
+
+}
+
+
+function selectChess(clientX, clientY){
+    
+	for (i=1; i<=chessColumn; i++){
+		for (j=1; j<=chessRow; j++){
+			
+			if (chessBottom[i][j].condition==0){
+				continue;
+			}
+			else{
+				
+				if(clientX<= chessBottom[i][j].x+radiusSamll && clientX>=chessBottom[i][j].x-radiusSamll
+				&& clientY >= chessBottom[i][j].y-radiusSamll && clientY<=chessBottom[i][j].y+radiusSamll)
+				{
+					
+					chessBottom[i][j].condition=0;
+					chessBottom[i][j].motion=1;
+					console.log("xid: ", chessBottom[i][j].id);
+					
+					
+					moveChess(clientX, clientY);
+					window.select=1;
+					//console.log("id: ", chessBottom[i][j].x);
+					//console.log("con: ", chessBottom[i][j].condition);
+					//console.log("motion: ", chessBottom[i][j].motion);
+				}
+			}
+		}
+	}
+}
+
+
+
+//user can move the chess being selected and it is invoke by 
+//the event listener of mouse move
+function moveChess(clientX, clientY){
+	for (i=1; i<=chessColumn; i++){
+		for (j=1; j<=chessRow; j++){
+			if (chessBottom[i][j].condition==1 ){
+				continue;
+			}
+			if (chessBottom[i][j].condition==0 && chessBottom[i][j].motion==1 && chessBottom[i][j].colour=="grey"){
+				c.beginPath();
+				c.arc(clientX,clientY,radiusSmall,0, Math.PI*2, false);
+				c.stroke();
+				c.fillStyle="grey";
+				c.fill();
+			}
+			if (chessBottom[i][j].condition==0 && chessBottom[i][j].motion==1 && chessBottom[i][j].colour=="black"){
+				c.beginPath();
+				c.arc(clientX,clientY,radiusSmall,0, Math.PI*2, false);
+				c.stroke();
+				c.fillStyle="black";
+				c.fill();
+			}
+		}
+	}
+	
+	
+
+}
+
+//user can click the board to drop the chess in the position he want and it is invoke by 
+//the event listener of click, this function also check if the position he drop a valid position
+//or not, if not a valid position, he will not allow to drop the chess
+function dropChess(clientX, clientY){
+	
+	var innerBlack=[];
+	var outerBlack=[];
+	
+	var innerGrey=[];
+	var outerGrey=[];
+	
+	for (a=1; a<=chessColumn; a++){
+		for (b=1; b<=chessRow; b++){
+			if (chessBottom[a][b].condition==1){
+				continue;
+			}
+			if ( chessBottom[a][b].condition==0 && chessBottom[a][b].motion==1 ){
+				
+				var dropX=a;
+				var dropY=b;
+				var dropId=parseInt(((dropY-1)*chessColumn)+dropX);
+				
+				chessBottom[dropX][dropY].id=0;
+				//console.log("dropX:", dropX, "dropY:", dropY, "dropid",dropId);
+				
+				
+				
+				if(outerLoop.includes(dropId) == true){
+					
+					for (h=1; h<=chessColumn; h++){
+						for (k=1; k<=chessRow; k++){
+							if(outerLoop.includes(chessBottom[h][k].id)==true 
+							&& chessBottom[h][k].colour=="black"){
+								
+								outerBlack.push(chessBottom[h][k].id);
+								
+								
+							}
+							
+							if(outerLoop.includes(chessBottom[h][k].id)==true 
+							&& chessBottom[h][k].colour=="grey"){
+								
+								outerGrey.push(chessBottom[h][k].id);
+								//console.log(outerGrey);
+								
+							}
+					
+					
+						}
+					}
+						
+				}
+				if (innerLoop.includes(dropId) == true){
+					
+					
+					for (n=1; n<=chessColumn; n++){
+						for (m=1; m<=chessRow; m++){
+							if(innerLoop.includes(chessBottom[n][m].id)==true 
+							&& chessBottom[n][m].colour=="black"){
+								
+								innerBlack.push(chessBottom[n][m].id);
+								
+							}
+							
+							if(innerLoop.includes(chessBottom[n][m].id)==true 
+							&& chessBottom[n][m].colour=="grey"){
+								
+								innerGrey.push(chessBottom[n][m].id);
+								
+							}
+					
+					
+						}
+					}
+					
+					
+				}
+
+				
+			}
+		}
+	}
+	
+	
+	for (i=1; i<=chessColumn; i++){
+		for (j=1; j<=chessRow; j++){
+			
+			if(clientX<= chessBottom[i][j].x+radiusSamll && clientX>=chessBottom[i][j].x-radiusSamll
+			&& clientY >= chessBottom[i][j].y-radiusSamll && clientY<=chessBottom[i][j].y+radiusSamll)
+				
+				{
+					
+					if (chessBottom[dropX][dropY].colour=="grey"){
+						if((i>= dropX-1 && i<=dropX+1 && j>=dropY-1 && j<=dropY+1) ||
+						 (outerLoop.includes(chessBottom[i][j].id)==true && (outerBlack.includes(chessBottom[i][j].id)))
+						 || (innerLoop.includes(chessBottom[i][j].id)==true && (innerBlack.includes(chessBottom[i][j].id)))){
+						
+						
+						chessBottom[dropX][dropY].id=(((dropY-1)*6)+dropX);
+						chessBottom[dropX][dropY].condition=0;
+						chessBottom[dropX][dropY].colour="null";
+						chessBottom[dropX][dropY].motion=0;
+						console.log("dropx", dropX);
+						console.log("dropy", dropY);
+						console.log("dropidto 0: ", chessBottom[dropX][dropY].id);
+						
+						chessBottom[i][j].colour="null";
+						chessBottom[i][j].colour="grey";
+						chessBottom[i][j].condition=1;
+						chessBottom[i][j].motion=0;
+						window.select=0;
+						console.log("dropidto 1: ", chessBottom[i][j].id);
+						
+						
+						move="Valid move!!";
+						
+						window.turn=0;
+						}
+						else {
+							move="Invalid Move!!";
+							
+							continue;
+						}
+					}
+					
+					
+					if (chessBottom[dropX][dropY].colour=="black"){
+						if((i>= dropX-1 && i<=dropX+1 && j>=dropY-1 && j<=dropY+1) ||
+						 (outerLoop.includes(chessBottom[i][j].id)==true && (outerGrey.includes(chessBottom[i][j].id)))
+						 || (innerLoop.includes(chessBottom[i][j].id)==true && (innerGrey.includes(chessBottom[i][j].id)))){
+						
+						
+						chessBottom[dropX][dropY].id=(((dropY-1)*6)+dropX);
+						chessBottom[dropX][dropY].condition=0;
+						chessBottom[dropX][dropY].colour="null";
+						chessBottom[dropX][dropY].motion=0;
+						console.log("dropx", dropX);
+						console.log("dropy", dropY);
+						console.log("dropidto 0: ", chessBottom[dropX][dropY].id);
+						
+						chessBottom[i][j].colour="null";
+						chessBottom[i][j].colour="black";
+						chessBottom[i][j].condition=1;
+						chessBottom[i][j].motion=0;
+						window.select=0;
+						console.log("dropidto 1: ", chessBottom[i][j].id);
+						
+						
+						move="Valid move!!";
+						
+						window.turn=0;
+						}
+						else {
+							move="Invalid Move!!";
+							
+							continue;
+						}
+					}
+				}
+		}
+	
+	}
+	
+
+}
+
+//this function let the opponent which is the black chess to move automatically
+function oppoMove(){
+	if (window.turn==0){
+		if (chessBottom[1][2].condition==1){
+			chessBottom[1][2].condition=0;
+			chessBottom[1][3].condition=1;
+			
+			window.turn=1;
+			window.test=1;
+			
+			return;
+		}
+		
+		else{
+			chessBottom[1][2].condition=1;
+			chessBottom[1][3].condition=0;
+			
+			window.turn=1;
+			window.test=1;
+			return;
+		}
+		
+		
+		
+		
+	}
+	
+}
+						
+			
+
+//this function draw the game board
+function drawBoard(){
+	c.strokeStyle="purple";
+	c.beginPath();
+	c.lineWidth=7;
+	c.arc(cir1X, cir1Y, radius,0.5*Math.PI, 0*Math.PI);
+	c.stroke();
+	
+	c.strokeStyle="blue";
+	c.beginPath();
+	c.arc(cir1X, cir1Y, radius/2,0.5*Math.PI, 0*Math.PI);
+	c.stroke();
+	
+	c.strokeStyle="purple";
+	c.beginPath();
+	c.arc(cir2X, cir2Y, radius,1*Math.PI, 0.5*Math.PI);
+	c.stroke();
+	
+	c.strokeStyle="blue";
+	c.beginPath();
+	c.arc(cir2X, cir2Y, radius/2,1*Math.PI, 0.5*Math.PI);
+	c.stroke();
+	
+	c.strokeStyle="purple";
+	c.beginPath();
+	c.arc(cir3X, cir3Y, radius,0*Math.PI, 1.5*Math.PI);c.stroke();
+	
+	c.strokeStyle="blue";
+	c.beginPath();
+	c.arc(cir3X, cir3Y, radius/2,0*Math.PI, 1.5*Math.PI);
+	c.stroke();
+	
+	c.strokeStyle="purple";
+	c.beginPath();
+	c.arc(cir4X, cir4Y, radius,1.5*Math.PI, 1*Math.PI);
+	c.stroke();
+	
+	c.strokeStyle="blue";
+	c.beginPath();
+	c.arc(cir4X, cir4Y, radius/2,1.5*Math.PI, 1*Math.PI);
+	c.stroke();
+	
+	//
+	//
+	//
+	//
+	c.strokeStyle="purple";
+	c.beginPath();
+	c.moveTo(cir1X+radius,cir1Y);
+	c.lineTo(cir1X+radius, cir3Y);
+	c.stroke();
+	
+	c.strokeStyle="blue";
+	c.beginPath();
+	c.moveTo(cir1X+radius/2,cir1Y);
+	c.lineTo(cir1X+radius/2, cir3Y);
+	c.stroke();
+	
+	c.strokeStyle="purple";
+	c.beginPath();
+	c.moveTo(cir2X-radius,cir2Y);
+	c.lineTo(cir2X-radius, cir4Y);
+	c.stroke();
+	
+	c.strokeStyle="blue";
+	c.beginPath();
+	c.moveTo(cir2X-radius/2,cir2Y);
+	c.lineTo(cir2X-radius/2, cir4Y);
+	c.stroke();
+	
+	c.strokeStyle="purple";
+	c.beginPath();
+	c.moveTo(cir1X,cir1Y+radius);
+	c.lineTo(cir2X, cir1Y+radius);
+	c.stroke();
+	
+	
+	c.strokeStyle="blue";
+	c.beginPath();
+	c.moveTo(cir1X,cir1Y+radius/2);
+	c.lineTo(cir2X, cir1Y+radius/2);
+	c.stroke();
+	
+	c.strokeStyle="purple";
+	c.beginPath();
+	c.moveTo(cir3X,cir3Y-radius);
+	c.lineTo(cir4X, cir3Y-radius);
+	c.stroke();
+	
+	c.strokeStyle="blue";
+	c.beginPath();
+	c.moveTo(cir3X,cir3Y-radius/2);
+	c.lineTo(cir4X, cir3Y-radius/2);
+	c.stroke();
+	
+	c.strokeStyle="green";
+	c.beginPath();
+	c.moveTo(cir1X,cir1Y);
+	c.lineTo(cir3X, cir3Y);
+	c.stroke();
+	
+	c.strokeStyle="green";
+	c.beginPath();
+	c.moveTo(cir1X,cir1Y);
+	c.lineTo(cir2X, cir2Y);
+	c.stroke();
+	
+	c.strokeStyle="green";
+	c.beginPath();
+	c.moveTo(cir2X,cir2Y);
+	c.lineTo(cir4X, cir4Y);
+	c.stroke();
+	
+	c.strokeStyle="green";
+	c.beginPath();
+	c.moveTo(cir3X,cir3Y);
+	c.lineTo(cir4X, cir4Y);
+	c.stroke();
+}
+
+//this create the circle object and its respective function
+function Circle(x,y, colour){
+	this.x=x;
+	this.y=y;
+	radiusSamll=15;
+	
+	this.draw= function(){
+		c.fillStyle=colour;
+		c.lineWidth=3;
+		c.beginPath();
+		c.arc(x,y,radiusSmall,0, Math.PI*2, false);
+		c.stroke();
+		c.fill();
+		
+	}
+	
+	this.renew= function(){
+		
+		
+	}
+	this.getX= function(){
+		return x;
+	}
+	this.getY= function(){
+		return y;
+	}
+	
+}
+
+
+// this function draw chess in their respective position if its condition is 1
+function drawChess(){
+	
+	getXML();
+	var str=window.chessResponse;
+	var res;
+	
+	
+	
+	for (i=1; i<=chessColumn; i++){
+		for (j=1; j<=chessRow; j++){
+			if (chessBottom[i][j].condition==0){
+				continue;
+			}
+			if (chessBottom[i][j].condition==1){
+				chessBottom[i][j].x=cir1X+(radius/2*(i-1));
+				chessBottom[i][j].y=cir1Y+(radius/2*(j-1));
+				//console.log("xid: ", chessBottom[1][4].id);
+				//existingChess.push(chessBottom[i][j].id);
+				
+				c.strokeStyle="black";
+				c.fillStyle="black";
+				circle=new Circle(chessBottom[i][j].x,chessBottom[i][j].y, chessBottom[i][j].colour );
+				circle.draw();
+				
+				
+			}
+			
+			
+			
+		}
+	}
+	
+	
+
+	
+	//console.log("xid: ", chessBottom[1][4].condition);
+	
+	for (i=1; i<=chessColumn; i++){
+		for (j=1; j<=chessRow; j++){
+			
+			existingChess.push(chessBottom[i][j].condition);
+
+			
+		}
+		
+	}
+	
+	postXML();
+	
+	/*
+	var file= fopen("pieces.txt", 3);
+	
+	if (file!= -1){
+	   var string= "bb";
+	   fwrite(file, string);
+	   fclose(file);
+	   
+	}
+	*/
+	
+	/*
+	<?php 
+	
+	$chess=existingChess;
+	
+	$sql="INSERT INTO 'board' ( 'pieces') VALUES ('$chess')";
+	//insert the new record into the activities table in the database
+		
+	if($con->query($sql)==TRUE){
+		echo"Successfully created!";
+		}
+		else{
+			echo"Error!";
+		}
+	
+	
+    ?>
+	*/
+
+	
+}
+
+//clear the screen
+function clearScreen(){
+	c.clearRect(0,0,canvas.width, canvas.height);
+}
+
+// this function is call every 100 ms , it clear the screen and draw all the element every 100 ms
+function play(){
+	
+	
+	clearScreen();
+	
+	drawBoard();
+	drawChess();
+	
+	
+	//oppoMove();
+	if (window.turn==1){
+		
+	
+		doubleClick();
+		selectChess();
+		
+		mousemoveChess();
+		moveChess();
+		
+		click();
+		dropChess();
+		
+		//console.log(existingChess);
+		existingChess.length=0;
+		
+		
+	}
+	
+	if(window.turn==0){
+		//c.font="30px Arial";
+		
+		//c.strokeText("Black player's turn... " , 25,150);
+	}
+	
+	c.font="30px Arial";
+	c.fillStyle="black";
+	c.fillText("Black Player's Score: "+scoreBlack , 25,50);
+	
+	c.font="30px Arial";
+	c.fillStyle="black";
+	c.fillText("Grey Player's Score: "+scoreGrey , 25,90);
+	
+	if (move!=undefined){
+		c.font="30px Arial";
+		c.fillStyle="red";
+		c.fillText(move , 500,50);
+	
+	}
+	c.fillStyle="grey";
+	
+	
+	//calculate the game score of both player
+	var countBlack=0;
+	for (i=1; i<=chessColumn; i++){
+		for (j=1; j<=chessRow; j++){
+			if ( chessBottom[i][j].colour=="black"){
+				countBlack=countBlack+1;
+			}
+		}
+	}
+	if (countBlack<=1){
+		window.start=0;
+		c.fillStyle="grey";
+		c.font="70px Arial";
+	    c.strokeText("Grey Player Wins !!! ", 50,320);
+		c.fill();
+		
+		var con= confirm("Game Over!!\nYour score is: ."+"\nClick OK to restart...");
+		if (con== true){
+			window.location.reload();
+		}
+	}
+	
+	var countGrey=0;
+	for (i=1; i<=chessColumn; i++){
+		for (j=1; j<=chessRow; j++){
+			if ( chessBottom[i][j].colour=="grey"){
+				countGrey=countGrey+1;
+			}
+		}
+	}
+	
+	
+	if (countGrey<=1){
+		window.start=0;
+		c.fillStyle="black";
+		c.font="70px Arial";
+		c.strokeText("Black Player Wins !!! ", 50,320);
+		c.fill();
+		
+		var con= confirm("Game Over!!\nYour score is: ."+"\nClick OK to restart...");
+		if (con== true){
+			window.location.reload();
+		}
+		
+		
+	}
+	
+	scoreGrey=(12-countBlack)*20;
+	scoreBlack=(12-countGrey)*20;
+	
+	
+}
+
+//call the play function every 100ms
+if (window.start==1){
+	setInterval(play, 100);
+}
+
+
+
+
+
+
+
+
+</script>
+
+<div class="menuBar">
+<a href="about.php">About</a> &middot;
+<a href="registerPage.php">Register</a> &middot;
+<a href="loginPage.php">Login</a> &middot;
+<a href="showMap.php">User Locations</a> &middot;
+<a href="showRank.php">Rankings</a>
+</div>
+<div style="width: 900px; height: 50px;">
+
+</div>
+
+</body>
+
+</html>
